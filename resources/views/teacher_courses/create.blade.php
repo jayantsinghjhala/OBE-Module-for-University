@@ -1,0 +1,198 @@
+@section('pageTitle', 'Create New Course')
+
+<x-app-layout>
+    <x-slot name="header">
+        <div class="flex justify-start gap-4">
+            <x-back-link />
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                {{ __('Create New Course') }}
+            </h2>
+        </div>
+    </x-slot>
+
+    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        {{ Breadcrumbs::render('teacher_courses.create') }}
+        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+            <div class="p-6 bg-white border-b border-gray-200">
+                <form method="POST" action="{{ route('teacher_courses.store') }}">
+                    @csrf
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="form-control w-full max-w-xl">
+                            <label class="label">
+                                <span class="label-text text-neutral font-bold">School</span>
+                            </label>
+                            <select class="select text-neutral input-bordered bg-white w-full max-w-xl" name="school_id" id="school_id" >
+                                <option disabled selected>Select School</option>
+                                @foreach($schools as $school)
+                                    <option value="{{ $school->id }}">School of {{ ucfirst($school->name) }}</option>
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('school_id')" class="mt-2" />
+                        </div>
+
+                        <div class="form-control w-full max-w-xl">
+                            <label class="label">
+                                <span class="label-text text-neutral font-bold">Department</span>
+                            </label>
+                            <select class="select text-neutral input-bordered bg-white w-full max-w-xl" name="department_id" id="department_id" disabled>
+                                <option disabled selected>Select Department</option>
+                            </select>
+                            <x-input-error :messages="$errors->get('department_id')" class="mt-2" />
+                        </div>
+
+                        <div class="form-control w-full max-w-xl">
+                            <label class="label">
+                                <span class="label-text text-neutral font-bold">Program</span>
+                            </label>
+                            <select class="select text-neutral input-bordered bg-white w-full max-w-xl" name="program_id" id="program_id" disabled>
+                                <option disabled selected>Select Program</option>
+                            </select>
+                            <x-input-error :messages="$errors->get('program_id')" class="mt-2" />
+                        </div>
+
+                        <div class="form-control w-full max-w-xl">
+                            <label class="label">
+                                <span class="label-text text-neutral font-bold">Course Code</span>
+                            </label>
+                            <input type="text" class="input text-neutral input-bordered bg-white w-full max-w-xl" name="code" placeholder="Enter Course Code" value="{{ old('code') }}"/>
+                            <x-input-error :messages="$errors->get('code')" class="mt-2" />
+                        </div>
+
+                        <div class="form-control w-full max-w-xl">
+                            <label class="label">
+                                <span class="label-text text-neutral font-bold">Course Name</span>
+                            </label>
+                            <input type="text" class="input text-neutral input-bordered bg-white w-full max-w-xl" name="name"  placeholder="Enter Course Name" value="{{ old('name') }}"/>
+                            <x-input-error :messages="$errors->get('name')" class="mt-2" />
+                        </div>
+
+                        <div class="form-control w-full max-w-xl">
+                            <label class="label">
+                                <span class="label-text text-neutral font-bold">Course Credit</span>
+                            </label>
+                            <input type="text" class="input text-neutral input-bordered bg-white w-full max-w-xl" name="course_credit"  placeholder="Enter Course Credit" value="{{ old('course_credit') }}" />
+                            <x-input-error :messages="$errors->get('course_credit')" class="mt-2" />
+                        </div>
+
+                        <div class="form-control w-full max-w-xl">
+                            <label class="label">
+                                <span class="label-text text-neutral font-bold">Course Type</span>
+                            </label>
+                            <select class="select text-neutral input-bordered bg-white w-full max-w-xl" name="type" id="type">
+                                <option disabled>Select Course Type</option>
+                                <option value="mandatory" {{ old('type') == 'mandatory' ? 'selected' : '' }}>Mandatory</option>
+                                <option value="elective" {{ old('type') == 'elective' ? 'selected' : '' }}>Elective</option>
+                            </select>
+                            <x-input-error :messages="$errors->get('type')" class="mt-2" />
+                        </div>
+
+                    </div>
+
+                    <div class="mt-4 p-4 space-x-2">
+                        <button type="submit" class="btn btn-sm px-7">
+                            Save
+                        </button>
+                        <x-back-link>{{ __('Cancel') }}</x-back-link>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function () {
+        const schoolSelect = $('#school_id');
+        const departmentSelect = $('#department_id');
+        const programSelect = $('#program_id');
+
+
+        // const oldSchoolId = "{{ old('school_id') }}";
+        // if (oldSchoolId) {
+        //     schoolSelect.val(oldSchoolId);
+        //     schoolSelect.trigger('change');
+        // }
+
+        schoolSelect.on('change', function () {
+            const selectedSchoolId = schoolSelect.val();
+
+            // Disable department and program selects initially
+            departmentSelect.prop('disabled', true);
+            programSelect.prop('disabled', true);
+
+            if (selectedSchoolId !== '') {
+                // Fetch departments based on the selected school via AJAX
+                $.ajax({
+                    url: `/get_departments/${selectedSchoolId}`,
+                    method: 'GET',
+                    dataType: 'json',
+                    success: function (res) {
+                        if (res.status == 1) {
+                            departmentSelect.empty(); // Clear existing options
+                            departmentSelect.append(`<option value="" selected disabled>Select Department</option>`);
+
+                            $.each(res.departments, function (index, department) {
+                                departmentSelect.append($('<option>', {
+                                    value: department.id,
+                                    text: department.name
+                                }));
+                            });
+                        }
+                    },
+                    complete: function () {
+                        departmentSelect.prop('disabled', false);
+
+                        // const oldDepartmentId = "{{ old('department_id') }}";
+                        // if (oldDepartmentId) {
+
+                        //     departmentSelect.val(oldDepartmentId).trigger('change');
+                        // }
+                    }
+                });
+            }
+        });
+
+        departmentSelect.on('change', function () {
+            const selectedDepartmentId = departmentSelect.val();
+
+            // Disable program select initially
+            programSelect.prop('disabled', true);
+
+            if (selectedDepartmentId !== '') {
+                // Fetch programs based on the selected department via AJAX
+                $.ajax({
+                    url: `/get_programs/${selectedDepartmentId}`,
+                    method: 'GET',
+                    dataType: 'json',
+                    success: function (res) {
+                        if (res.status == 1) {
+                            programSelect.empty(); // Clear existing options
+                            programSelect.append(`<option value="" selected disabled>Select Program</option>`);
+
+                            $.each(res.programs, function (index, program) {
+                                programSelect.append($('<option>', {
+                                    value: program.id,
+                                    text: program.name
+                                }));
+                            });
+                        }
+                    },
+                    complete: function () {
+                        programSelect.prop('disabled', false);
+
+                        // const oldProgramId = "{{ old('program_id') }}";
+                        // if (oldProgramId) {
+                        //     programSelect.val(oldProgramId);
+                        // }
+                    }
+                });
+            }
+        });
+    });
+
+
+    </script>
+</x-app-layout>
+
+
+
